@@ -1,29 +1,35 @@
-import {Command, flags} from '@oclif/command'
+import { Command } from "@oclif/command";
+import { readdir, rename } from "fs";
+import { cwd } from "process";
+
+import flags from "./flags";
 
 class Bannger extends Command {
-  static description = 'describe the command here'
-
-  static flags = {
-    // add --version flag to show CLI version
-    version: flags.version({char: 'v'}),
-    help: flags.help({char: 'h'}),
-    // flag with a value (-n, --name=VALUE)
-    name: flags.string({char: 'n', description: 'name to print'}),
-    // flag with no value (-f, --force)
-    force: flags.boolean({char: 'f'}),
-  }
-
-  static args = [{name: 'file'}]
+  static flags = flags;
 
   async run() {
-    const {args, flags} = this.parse(Bannger)
+    const { flags } = this.parse(Bannger);
 
-    const name = flags.name ?? 'world'
-    this.log(`hello ${name} from ./src/index.ts`)
-    if (args.file && flags.force) {
-      this.log(`you input --force and --file: ${args.file}`)
-    }
+    readdir(cwd(), (err, files) => {
+      if (err) return console.log("Unable to scan direcotry");
+
+      // rename files to "[suffix]file[prefix].extension"
+      if (flags.suffix || flags.prefix) {
+        files.forEach((file) => {
+          const fileArr = file.split(".", 2);
+          rename(
+            `${cwd()}/${file}`,
+            `${cwd()}/${flags.prefix || ""}${fileArr[0]}${flags.suffix || ""}.${
+              fileArr[1]
+            }`,
+            (err) => {
+              if (err) console.log(`ERROR: ${err}`);
+            }
+          );
+        });
+      }
+    });
   }
 }
 
-export = Bannger
+export = Bannger;
